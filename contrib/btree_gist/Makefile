@@ -27,7 +27,8 @@ OBJS =  \
 	btree_ts.o \
 	btree_utils_num.o \
 	btree_utils_var.o \
-	btree_uuid.o
+	btree_uuid.o \
+	btree_rangetypes.o
 
 EXTENSION = btree_gist
 DATA = btree_gist--1.0--1.1.sql \

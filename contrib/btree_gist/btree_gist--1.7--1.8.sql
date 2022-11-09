@@ -43,6 +43,11 @@ RETURNS void
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
+CREATE FUNCTION gbt_range_gist_sortsupport(internal)
+RETURNS void
+AS 'MODULE_PATHNAME'
+LANGUAGE C IMMUTABLE STRICT;
+
 ALTER OPERATOR FAMILY gist_bit_ops USING gist ADD
     FUNCTION    11  (bit, bit) gbt_bit_sortsupport (internal) ;
 
@@ -108,3 +113,7 @@ ALTER OPERATOR FAMILY gist_timestamp_ops USING gist ADD
 
 ALTER OPERATOR FAMILY gist_uuid_ops USING gist ADD
     FUNCTION    11  (uuid, uuid) uuid_sortsupport (internal) ;
+
+ALTER OPERATOR FAMILY range_ops USING gist ADD
+    FUNCTION    11  (anyrange, anyrange) gbt_range_gist_sortsupport(internal);
+
