@@ -1210,3 +1210,35 @@ check_ssl(bool *newval, void **extra, GucSource source)
 #endif
 	return true;
 }
+
+bool
+check_shared_preload_libraries(char **newval, void **extra, GucSource source)
+{
+	char *rawname;
+	List *library_list;
+	ListCell *cell;
+
+	/* Operate on a string copy */
+	rawname = pstrdup(*newval);
+
+	/* Split comma-separated list of library names */
+	if (!SplitIdentifierString(rawname, ',', &library_list))
+	{
+		GUC_check_errdetail("Library list syntax is invalid");
+		pfree(rawname);
+		list_free(library_list);
+		return false;
+	}
+
+	foreach(cell, library_list)
+	{
+		char *libname = lfirst(cell);
+
+		elog(DEBUG5, "trying to load specified shared preload library \"%s\"",
+			 libname);
+
+		load_file(libname, false);
+	}
+
+	return true;
+}

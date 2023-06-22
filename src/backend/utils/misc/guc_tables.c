@@ -4104,7 +4104,7 @@ struct config_string ConfigureNamesString[] =
 		},
 		&shared_preload_libraries_string,
 		"",
-		NULL, NULL, NULL
+		check_shared_preload_libraries, NULL, NULL
 	},
 
 	{
