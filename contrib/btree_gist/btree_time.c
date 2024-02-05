@@ -358,14 +358,3 @@ gbt_time_sortsupport(PG_FUNCTION_ARGS)
 
 	PG_RETURN_VOID();
 }
-
-Datum
-gbt_timetz_sortsupport(PG_FUNCTION_ARGS)
-{
-	SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
-
-	ssup->comparator = gbt_timekey_ssup_cmp;
-	ssup->ssup_extra = NULL;
-
-	PG_RETURN_VOID();
-}

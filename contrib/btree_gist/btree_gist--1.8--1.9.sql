@@ -48,11 +48,6 @@ RETURNS void
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE FUNCTION gbt_timetz_sortsupport(internal)
-RETURNS void
-AS 'MODULE_PATHNAME'
-LANGUAGE C IMMUTABLE STRICT;
-
 CREATE FUNCTION gbt_int2_sortsupport(internal)
     RETURNS void
 AS 'MODULE_PATHNAME'
@@ -104,6 +99,16 @@ AS 'MODULE_PATHNAME'
     LANGUAGE C IMMUTABLE STRICT;
 
 CREATE FUNCTION gbt_text_sortsupport(internal)
+    RETURNS void
+AS 'MODULE_PATHNAME'
+    LANGUAGE C IMMUTABLE STRICT;
+
+CREATE FUNCTION gbt_ts_sortsupport(internal)
+    RETURNS void
+AS 'MODULE_PATHNAME'
+    LANGUAGE C IMMUTABLE STRICT;
+
+CREATE FUNCTION gbt_uuid_sortsupport(internal)
     RETURNS void
 AS 'MODULE_PATHNAME'
     LANGUAGE C IMMUTABLE STRICT;
@@ -175,13 +180,13 @@ ALTER OPERATOR FAMILY gist_time_ops USING gist ADD
     FUNCTION    11  (time, time) gbt_time_sortsupport (internal) ;
 
 ALTER OPERATOR FAMILY gist_timestamp_ops USING gist ADD
-    FUNCTION    11  (timestamp, timestamp) timestamp_sortsupport (internal) ;
+    FUNCTION    11  (timestamp, timestamp) gbt_ts_sortsupport (internal) ;
 
 ALTER OPERATOR FAMILY gist_timestamptz_ops USING gist ADD
-    FUNCTION    11  (timestamptz, timestamptz) timestamp_sortsupport (internal) ;
+    FUNCTION    11  (timestamptz, timestamptz) gbt_ts_sortsupport (internal) ;
 
 ALTER OPERATOR FAMILY gist_timetz_ops USING gist ADD
-    FUNCTION    11  (timetz, timetz) gbt_timetz_sortsupport (internal) ;
+    FUNCTION    11  (timetz, timetz) gbt_time_sortsupport (internal) ;
 
 ALTER OPERATOR FAMILY gist_uuid_ops USING gist ADD
-    FUNCTION    11  (uuid, uuid) uuid_sortsupport (internal) ;
+    FUNCTION    11  (uuid, uuid) gbt_uuid_sortsupport (internal) ;
