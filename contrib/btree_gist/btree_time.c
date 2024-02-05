@@ -41,17 +41,16 @@ PG_FUNCTION_INFO_V1(gbt_timetz_sortsupport);
 
 
 static int
-time_fast_cmp(Datum x, Datum y, SortSupport ssup)
+gbt_timekey_ssup_cmp(Datum x, Datum y, SortSupport ssup)
 {
-	return DatumGetInt32(DirectFunctionCall2(time_cmp, x, y));
-}
+	timeKEY *arg1 = (timeKEY *) DatumGetPointer(x);
+	timeKEY *arg2 = (timeKEY *) DatumGetPointer(y);
 
-static int
-timetz_fast_cmp(Datum x, Datum y, SortSupport ssup)
-{
-	return DatumGetInt32(DirectFunctionCall2(timetz_cmp, x, y));
+	/* lower and upper are equal during sortsupport comparison */
+	return DatumGetInt32(DirectFunctionCall2(time_cmp,
+	                                         TimeADTGetDatumFast(arg1->lower),
+	                                         TimeADTGetDatumFast(arg2->lower)));
 }
-
 
 static bool
 gbt_timegt(const void *a, const void *b, FmgrInfo *flinfo)
@@ -354,7 +353,7 @@ gbt_time_sortsupport(PG_FUNCTION_ARGS)
 {
 	SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
 
-	ssup->comparator = time_fast_cmp;
+	ssup->comparator = gbt_timekey_ssup_cmp;
 	ssup->ssup_extra = NULL;
 
 	PG_RETURN_VOID();
@@ -365,7 +364,7 @@ gbt_timetz_sortsupport(PG_FUNCTION_ARGS)
 {
 	SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
 
-	ssup->comparator = timetz_fast_cmp;
+	ssup->comparator = gbt_timekey_ssup_cmp;
 	ssup->ssup_extra = NULL;
 
 	PG_RETURN_VOID();
