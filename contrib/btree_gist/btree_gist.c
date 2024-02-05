@@ -6,6 +6,9 @@
 #include "access/stratnum.h"
 #include "utils/builtins.h"
 
+#include "access/gist.h"
+#include "btree_gist.h"
+
 PG_MODULE_MAGIC;
 
 PG_FUNCTION_INFO_V1(gbt_decompress);
@@ -35,12 +38,14 @@ gbtreekey_in(PG_FUNCTION_ARGS)
 Datum
 gbtreekey_out(PG_FUNCTION_ARGS)
 {
-	/* Sadly, we do not receive any indication of the specific type */
-	ereport(ERROR,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("cannot display a value of type %s", "gbtreekey?")));
+	int32KEY  *keyval = (int32KEY *) PG_GETARG_POINTER(0);
+	StringInfo buf    = makeStringInfo();
 
-	PG_RETURN_VOID();			/* keep compiler quiet */
+	/* Sadly, we do not receive any indication of the specific type */
+	elog(DEBUG1, "gist key val lower %d, upper %d", keyval->lower, keyval->upper);
+
+	appendStringInfo(buf, "%d, %d", keyval->lower, keyval->upper);
+	PG_RETURN_CSTRING(buf->data);
 }
 
 
