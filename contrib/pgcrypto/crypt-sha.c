@@ -245,7 +245,7 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 	 * 8. Finalize digest B
 	 */
 	px_md_update(digestB, (const unsigned char *)pw, len);
-	px_md_update(digestB, (const unsigned char *)salt, salt_len);
+	px_md_update(digestB, (const unsigned char *)dec_salt_binary, salt_len);
 	px_md_update(digestB, (const unsigned char *)pw, len);
 	px_md_finish(digestB, sha_buf);
 
