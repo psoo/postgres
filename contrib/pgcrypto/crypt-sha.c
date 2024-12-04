@@ -42,10 +42,10 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 	char *p_bytes = NULL;
 	char *s_bytes = NULL;
 	char *cp = NULL;
-	const char *ep; /* holds pointer to the end of the salt string */
+	const char *ep;       /* holds pointer to the end of the salt string */
 
-	size_t buf_size = 0;  /* default for sha256crypt */
-	unsigned int block;         /* number of bytes processed */
+	size_t buf_size = 0;  /* buffer size for sha256crypt/sha512crypt */
+	unsigned int block;   /* number of bytes processed */
 	unsigned int rounds = PX_SHACRYPT_ROUNDS_DEFAULT;
 
 	unsigned len, salt_len;
@@ -66,9 +66,10 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 	 */
 	if (dstlen < PX_SHACRYPT_BUF_LEN)
 	{
-		elog(ERROR, "insufficient result buffer size for crypt");
+		elog(ERROR, "insufficient result buffer size to encrypt password");
 	}
 
+	/* Init contents of buffers properly */
 	memset(&out_buf, '\0', sizeof(out_buf));
 	memset(&sha_buf, '\0', sizeof(sha_buf));
 	memset(&sha_buf_tmp, '\0', sizeof(sha_buf_tmp));
@@ -268,7 +269,7 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 	 * from to lowest bit position (numeric value 1)
 	 *
 	 * a) for a 1-digit add digest B (sha_buf) to digest A
-     * b) for a 0-digit add the password string
+	 * b) for a 0-digit add the password string
 	 */
 
 	block = len;
@@ -362,28 +363,40 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 	 *    The loop uses a digest as input.  In the first round it is the
 	 *    digest produced in step 12.  In the latter steps it is the digest
 	 *    produced in step 21.h of the previous round.  The following text
-	 *    uses the notation "digest A/C" to describe this behavior.
+	 *    uses the notation "digest A/B" to describe this behavior.
 	 */
 	for (block = 0; block < rounds; block++) {
 
+		/* a) start digest B */
 		px_md_reset(digestB);
 
+		/*
+		 * b) for odd round numbers add the byte sequense P to digest B
+		 * c) for even round numbers add digest A/B
+		 */
 		px_md_update(digestB,
 					 (block & 1) ? (const unsigned char *)p_bytes : sha_buf,
 					 (block & 1) ? len : buf_size);
 
+		/*  d) for all round numbers not divisible by 3 add the byte sequence S */
 		if (block % 3) {
 			px_md_update(digestB, (const unsigned char *)s_bytes, salt_len);
 		}
 
+		/* e) for all round numbers not divisible by 7 add the byte sequence P */
 		if (block % 7) {
 			px_md_update(digestB, (const unsigned char *)p_bytes, len);
 		}
 
+		/*
+		 * f) for odd round numbers add digest A/C
+		 * g) for even round numbers add the byte sequence P
+		 */
 		px_md_update(digestB,
 					 (block & 1) ? sha_buf : (const unsigned char *)p_bytes,
 					 (block & 1) ? buf_size : len);
 
+		/* h) finish digest C. */
 		px_md_finish(digestB, sha_buf);
 
 	}
