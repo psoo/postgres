@@ -9,6 +9,7 @@ pgcrypto_sources = files(
   'crypt-des.c',
   'crypt-gensalt.c',
   'crypt-md5.c',
+  'crypt-sha.c',
   'mbuf.c',
   'pgcrypto.c',
   'pgp-armor.c',

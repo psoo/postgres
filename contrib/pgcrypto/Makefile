@@ -11,6 +11,7 @@ OBJS = \
 	crypt-des.o \
 	crypt-gensalt.o \
 	crypt-md5.o \
+	crypt-sha.o \
 	mbuf.o \
 	openssl.o \
 	pgcrypto.o \

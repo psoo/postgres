@@ -185,3 +185,92 @@ _crypt_gensalt_blowfish_rn(unsigned long count,
 
 	return output;
 }
+
+static char *
+_crypt_gensalt_sha(unsigned long count,
+                   const char *input, int size, char *output, int output_size)
+{
+	char * s_ptr = output;
+	unsigned int result_bufsize = PX_SHACRYPT_SALT_BUF_LEN;                       /* null byte */
+	int rc;
+
+	/* output buffer must be allocated with PX_MAX_SALT_LEN bytes */
+	if (PX_MAX_SALT_LEN < result_bufsize)
+	{
+		elog(ERROR, "invalid size of salt");
+	}
+
+	/* shacrypt salt len must not exceed PX_MAX_SALT_LEN */
+	Assert(PX_SHACRYPT_SALT_LEN_MAX <= PX_MAX_SALT_LEN);
+	if (PX_SHACRYPT_SALT_LEN_MAX > PX_MAX_SALT_LEN)
+	{
+		elog(ERROR, "result buffer too small for salt");
+	}
+
+	/*
+	 * Care must be taken to not exceed the buffer size allocated for
+	 * the input character buffer.
+	 */
+
+	if (PX_SHACRYPT_SALT_LEN_MAX != size)
+	{
+		elog(ERROR, "invalid length of salt string");
+	}
+
+	if (output_size < size) {
+		elog(ERROR, "invalid size of result salt buffer");
+	}
+
+	/* Skip magic bytes, set by callers */
+	s_ptr += 3;
+	if ((rc = pg_snprintf(s_ptr, 18, "rounds=%ld$", count)) <= 0)
+	{
+		elog(ERROR, "cannot format salt string");
+	}
+
+	/* s_ptr should now be positioned at the start of the salt string */
+	s_ptr += rc;
+
+	/*
+	 * Normalize salt string
+	 *
+	 * size of input buffer was checked above to
+	 * not exceed PX_SHACRYPT_SALT_LEN_MAX.
+	 */
+	for (int i = 0; i < size; i++)
+	{
+		*s_ptr = _crypt_itoa64[input[i] & 0x3f];
+		s_ptr++;
+	}
+
+	/* We're done */
+	return output;
+}
+
+char *
+_crypt_gensalt_sha512_rn(unsigned long count,
+						 char const *input, int size,
+						 char *output, int output_size)
+{
+	memset(output, 0, output_size);
+	/* set magic byte for sha512crypt */
+	output[0] = '$';
+	output[1] = '6';
+	output[2] = '$';
+
+	return _crypt_gensalt_sha(count, input, size, output, output_size);
+}
+
+char *
+_crypt_gensalt_sha256_rn(unsigned long count,
+						 const char *input, int size,
+						 char *output, int output_size)
+{
+	memset(output, 0, output_size);
+	/* set magic byte for sha512crypt */
+	output[0] = '$';
+	output[1] = '5';
+	output[2] = '$';
+
+	return _crypt_gensalt_sha(count, input, size, output, output_size);
+}
