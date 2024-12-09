@@ -189,6 +189,23 @@ hmac(data bytea, key bytea, type text) returns bytea
       <entry>13</entry>
       <entry>Original UNIX crypt</entry>
      </row>
+     <row>
+      <entry><literal>sha256crypt</literal></entry>
+      <entry>unlimited</entry>
+      <entry>no</entry>
+      <entry>up to 32</entry>
+      <entry>80</entry>
+      <entry>sha256crypt adapted from crypt/openssl</entry>
+     </row>
+     <row>
+      <entry><literal>sha512crypt</literal></entry>
+      <entry>unlimited</entry>
+      <entry>no</entry>
+      <entry>up to 32</entry>
+      <entry>123</entry>
+      <entry>sha256crypt adapted from crypt/openssl</entry>
+     </row>
+
     </tbody>
    </tgroup>
   </table>
@@ -245,7 +262,8 @@ gen_salt(type text [, iter_count integer ]) returns text
    <para>
     The <parameter>type</parameter> parameter specifies the hashing algorithm.
     The accepted types are: <literal>des</literal>, <literal>xdes</literal>,
-    <literal>md5</literal> and <literal>bf</literal>.
+    <literal>md5</literal>, <literal>bf</literal>, <literal>sha256crypt</literal> and
+    <literal>sha512crypt</literal>.
    </para>
 
    <para>
@@ -283,6 +301,12 @@ gen_salt(type text [, iter_count integer ]) returns text
        <entry>6</entry>
        <entry>4</entry>
        <entry>31</entry>
+      </row>
+      <row>
+       <entry><literal>sha256crypt, sha512crypt</literal></entry>
+       <entry>5000</entry>
+       <entry>1000</entry>
+       <entry>999999999</entry>
       </row>
      </tbody>
     </tgroup>
