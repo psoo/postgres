@@ -203,7 +203,7 @@ hmac(data bytea, key bytea, type text) returns bytea
       <entry>no</entry>
       <entry>up to 32</entry>
       <entry>123</entry>
-      <entry>sha256crypt adapted from crypt/openssl</entry>
+      <entry>sha512crypt adapted from crypt/openssl</entry>
      </row>
 
     </tbody>
