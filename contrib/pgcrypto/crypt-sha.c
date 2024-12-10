@@ -356,6 +356,9 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 	}
 	memcpy(cp, sha_buf_tmp, block);
 
+	/* Make sure we don't leave something important behind */
+	px_memset(&sha_buf_tmp, 0, sizeof sha_buf);
+
 	/*
 	 * 21 Repeat a loop according to the number specified in the rounds=<N>
 	 *    specification in the salt (or the default value if none is
@@ -484,6 +487,9 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 
 	/* copy over result to specified buffer ... */
 	memcpy(passwd, out_buf, dstlen);
+
+	/* make sure nothing important is left behind */
+	px_memset(&sha_buf, 0, sizeof sha_buf);
 
 	/* ...and we're done */
 	return passwd;
