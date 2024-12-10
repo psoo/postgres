@@ -150,17 +150,17 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 
 	}
 
+	elog(DEBUG1, "using rounds = %d", rounds);
+
 	/*
 	 * We need the real length of the decoded salt string, this is every
-	 * character after the last '$' in the preamble. After this, dec_salt_binary
-	 * is now positioned at the beginning of the salt string.
+	 * character before the last '$' in the preamble. After the options,
+	 * dec_salt_binary is now positioned at the beginning of the salt string.
 	 */
 	for (ep = dec_salt_binary;
 	     *ep && *ep != '$' && ep < (dec_salt_binary + PX_SHACRYPT_SALT_LEN_MAX);
 	     ep++) continue;
 	salt_len = ep - dec_salt_binary;
-
-	elog(DEBUG1, "using rounds = %d", rounds);
 
 	/*
 	 * Choose the correct digest length and add the magic bytes to
@@ -217,13 +217,14 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 
 		char tmp_buf[80]; /* "rounds=999999999" */
 
+		memset(&tmp_buf, '\0', sizeof(tmp_buf));
 		snprintf(tmp_buf, sizeof(tmp_buf), "rounds=%u", rounds);
 		strlcat(out_buf, tmp_buf, sizeof(out_buf));
 		strlcat(out_buf, ascii_dollar, sizeof(out_buf));
 
 	}
 
-	strlcat(out_buf, dec_salt_binary, sizeof(out_buf));
+	strncat(out_buf, dec_salt_binary, salt_len);
 
 	if (strlen(out_buf) > 3 + 17 * rounds_custom + salt_len)
 	{
