@@ -69,7 +69,7 @@ run_crypt_bf(const char *psw, const char *salt,
 
 static char *
 run_crypt_sha(const char *psw, const char *salt,
-              char *buf, unsigned len)
+			  char *buf, unsigned len)
 {
 	char *res;
 
