@@ -224,7 +224,7 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 			buf_size = 32;
 
 			elog(DEBUG1,
-			     "using sha256crypt as requested by magic byte in salt");
+				 "using sha256crypt as requested by magic byte in salt");
 			strlcat(out_buf, magic_bytes[0], sizeof(out_buf));
 			break;
 		}
@@ -243,7 +243,7 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 			buf_size = PX_SHACRYPT_DIGEST_MAX_LENGTH;
 
 			elog(DEBUG1,
-			     "using sha512crypt as requested by magic byte in salt");
+				 "using sha512crypt as requested by magic byte in salt");
 			strlcat(out_buf, magic_bytes[1], sizeof(out_buf));
 			break;
 		}
@@ -462,16 +462,16 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 	cp = out_buf + strlen(out_buf);
 	*cp++ = ascii_dollar[0];
 
-# define b64_from_24bit(B2, B1, B0, N)                                  \
-    do {                                                                \
-        unsigned int w = ((B2) << 16) | ((B1) << 8) | (B0);             \
-        int i = (N);                                                    \
-        while (i-- > 0)                                                 \
-            {                                                           \
-                *cp++ = _crypt_itoa64[w & 0x3f];                            \
-                w >>= 6;                                                \
-            }                                                           \
-    } while (0)
+# define b64_from_24bit(B2, B1, B0, N)                      \
+	do {                                                    \
+		unsigned int w = ((B2) << 16) | ((B1) << 8) | (B0); \
+		int i = (N);                                        \
+		while (i-- > 0)                                     \
+		{                                                   \
+			*cp++ = _crypt_itoa64[w & 0x3f];                \
+			w >>= 6;                                        \
+		}                                                   \
+	} while (0)
 
 	switch(type)
 	{
