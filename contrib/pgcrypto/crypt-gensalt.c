@@ -188,7 +188,7 @@ _crypt_gensalt_blowfish_rn(unsigned long count,
 
 static char *
 _crypt_gensalt_sha(unsigned long count,
-                   const char *input, int size, char *output, int output_size)
+				   const char *input, int size, char *output, int output_size)
 {
 	char * s_ptr = output;
 	unsigned int result_bufsize = PX_SHACRYPT_SALT_BUF_LEN;                       /* null byte */

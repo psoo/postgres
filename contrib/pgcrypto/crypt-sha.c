@@ -138,7 +138,7 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 	 * ascii dollar signs.
 	 */
 	if ((dec_salt_binary[0] != ascii_dollar[0])
-	    && (dec_salt_binary[2] != ascii_dollar[0]))
+		&& (dec_salt_binary[2] != ascii_dollar[0]))
 	{
 		elog(ERROR, "invalid format of salt");
 	}
@@ -170,7 +170,7 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 	 * Unknown magic byte is handled below
 	 */
 	if (strncmp(dec_salt_binary,
-	            rounds_prefix, sizeof(rounds_prefix) - 1) == 0) {
+				rounds_prefix, sizeof(rounds_prefix) - 1) == 0) {
 
 		const char *num = dec_salt_binary + sizeof(rounds_prefix) - 1;
 		char *endp;
@@ -198,8 +198,8 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 	 * dec_salt_binary is now positioned at the beginning of the salt string.
 	 */
 	for (ep = dec_salt_binary;
-	     *ep && *ep != '$' && ep < (dec_salt_binary + PX_SHACRYPT_SALT_LEN_MAX);
-	     ep++) continue;
+		*ep && *ep != '$' && ep < (dec_salt_binary + PX_SHACRYPT_SALT_LEN_MAX);
+		ep++) continue;
 	salt_len = ep - dec_salt_binary;
 
 	/*
