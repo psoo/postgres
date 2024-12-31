@@ -192,18 +192,24 @@ hmac(data bytea, key bytea, type text) returns bytea
      <row>
       <entry><literal>sha256crypt</literal></entry>
       <entry>unlimited</entry>
-      <entry>no</entry>
+      <entry>yes</entry>
       <entry>up to 32</entry>
       <entry>80</entry>
-      <entry>sha256crypt adapted from crypt/openssl</entry>
+      <entry>Adapted from publicly available reference implementation
+       <ulink url="https://www.akkadia.org/drepper/SHA-crypt.txt">Unix crypt using SHA-256 and SHA-512
+       </ulink>
+      </entry>
      </row>
      <row>
       <entry><literal>sha512crypt</literal></entry>
       <entry>unlimited</entry>
-      <entry>no</entry>
+      <entry>yes</entry>
       <entry>up to 32</entry>
       <entry>123</entry>
-      <entry>sha512crypt adapted from crypt/openssl</entry>
+      <entry>Adapted from publicly available reference implementation
+       <ulink url="https://www.akkadia.org/drepper/SHA-crypt.txt">Unix crypt using SHA-256 and SHA-512
+       </ulink>
+      </entry>
      </row>
 
     </tbody>
@@ -263,7 +269,8 @@ gen_salt(type text [, iter_count integer ]) returns text
     The <parameter>type</parameter> parameter specifies the hashing algorithm.
     The accepted types are: <literal>des</literal>, <literal>xdes</literal>,
     <literal>md5</literal>, <literal>bf</literal>, <literal>sha256crypt</literal> and
-    <literal>sha512crypt</literal>.
+    <literal>sha512crypt</literal>. The last two, <literal>sha256crypt</literal> and
+    <literal>sha512crypt</literal> are modern <literal>SHA-2</literal> based password hashes.
    </para>
 
    <para>
@@ -335,6 +342,15 @@ gen_salt(type text [, iter_count integer ]) returns text
     In the <literal>crypt-bf</literal> entries, the number after a slash is
     the <parameter>iter_count</parameter> parameter of
     <function>gen_salt</function>.
+   </para>
+
+   <para>
+   The default <parameter>iter_count</parameter> for <literal>sha256crypt</literal> and
+   <literal>sha512crypt</literal> of <literal>5000</literal> is considered too low for modern
+   hardware, but can be adjusted to generate stronger password hashes. Currently the generated hash
+   string always includes the <parameter>rounds</parameter> even when just the default is used.
+   Otherwise both hashes, <literal>sha256crypt</literal> and <literal>sha512crypt</literal> are
+   considered safe.
    </para>
 
    <table id="pgcrypto-hash-speed-table">
