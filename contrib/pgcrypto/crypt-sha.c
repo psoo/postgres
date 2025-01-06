@@ -91,6 +91,9 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 	unsigned len, salt_len;
 
 	/* Sanity checks */
+	if (!passwd)
+		return NULL;
+
 	if (pw == NULL)
 	{
 		elog(ERROR, "null value for password rejected");
@@ -520,14 +523,24 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 			break;
 		}
 
-		default:
-			goto error;
+		case PGCRYPTO_SHA_UNKOWN:
+			/* we shouldn't land here ... */
+			elog(ERROR, "unsupported digest length");
+
 	}
 
 	*cp = '\0';
 
-	/* copy over result to specified buffer ... */
-	memcpy(passwd, out_buf, dstlen);
+	/*
+	 * Copy over result to specified buffer.
+	 *
+	 * The passwd character buffer should have at least PX_SHACRYPT_BUF_LEN
+	 * allocated, since we checked above if dstlen is smaller than
+	 * PX_SHACRYPT_BUF_LEN (which also includes the NULL byte).
+	 *
+	 * In that case we would have failed above already.
+	 */
+	memcpy(passwd, out_buf, PX_SHACRYPT_BUF_LEN);
 
 	/* make sure nothing important is left behind */
 	px_memset(&sha_buf, 0, sizeof sha_buf);
