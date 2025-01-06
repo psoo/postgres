@@ -52,13 +52,13 @@
 #define PX_SHACRYPT_DIGEST_MAX_LENGTH 64
 
 /* calculated buffer size of a buffer to store a shacrypt salt string */
-#define PX_SHACRYPT_SALT_BUF_LEN (3 + 7 + 10 + 1 + PX_SHACRYPT_SALT_LEN_MAX + 1)
+#define PX_SHACRYPT_SALT_BUF_LEN (3 + 7 + 10 + PX_SHACRYPT_SALT_LEN_MAX + 1)
 
 /*
  * calculated buffer size of a buffer to store complete result of a shacrypt
  * digest including salt
  */
-#define PX_SHACRYPT_BUF_LEN PX_SHACRYPT_SALT_LEN_MAX + 86 +1
+#define PX_SHACRYPT_BUF_LEN PX_SHACRYPT_SALT_BUF_LEN + 86 + 1
 
 /* Default number of rounds of shacrypt if not explicitly specified.  */
 #define PX_SHACRYPT_ROUNDS_DEFAULT 5000

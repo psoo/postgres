@@ -556,4 +556,5 @@ error:
 		px_md_free(digestB);
 
 	elog(ERROR, "cannot create encrypted password");
+	return NULL; /* keep compiler quiet */
 }
