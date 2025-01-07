@@ -191,7 +191,7 @@ _crypt_gensalt_sha(unsigned long count,
 				   const char *input, int size, char *output, int output_size)
 {
 	char * s_ptr = output;
-	unsigned int result_bufsize = PX_SHACRYPT_SALT_BUF_LEN;                       /* null byte */
+	unsigned int result_bufsize = PX_SHACRYPT_SALT_BUF_LEN;
 	int rc;
 
 	/* output buffer must be allocated with PX_MAX_SALT_LEN bytes */
