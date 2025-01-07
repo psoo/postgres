@@ -87,7 +87,7 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 
 	size_t buf_size = 0;  /* buffer size for sha256crypt/sha512crypt */
 	unsigned int block;   /* number of bytes processed */
-	unsigned int rounds = PX_SHACRYPT_ROUNDS_DEFAULT;
+	unsigned long rounds = PX_SHACRYPT_ROUNDS_DEFAULT;
 
 	unsigned len, salt_len;
 
@@ -188,11 +188,13 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 		if (*endp == '$') {
 			dec_salt_binary = endp + 1;
 			if (srounds > PX_SHACRYPT_ROUNDS_MAX)
-				rounds = PX_SHACRYPT_ROUNDS_MAX;
+				elog(ERROR, "maximum rounds supported: \"%d\"",
+					 PX_SHACRYPT_ROUNDS_MAX);
 			else if (srounds < PX_SHACRYPT_ROUNDS_MIN)
-				rounds = PX_SHACRYPT_ROUNDS_MIN;
+				elog(ERROR, "minimum rounds supported: \"%d\"",
+					 PX_SHACRYPT_ROUNDS_MIN);
 			else
-				rounds = (unsigned int)srounds;
+				rounds = (unsigned long)srounds;
 			rounds_custom = 1;
 		} else {
 			elog(ERROR, "could not parse salt options");
@@ -200,7 +202,7 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 
 	}
 
-	elog(DEBUG1, "using rounds = %d", rounds);
+	elog(DEBUG1, "using rounds = %lu", rounds);
 
 	/*
 	 * We need the real length of the decoded salt string, this is every
@@ -268,7 +270,7 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 		char tmp_buf[80]; /* "rounds=999999999" */
 
 		memset(&tmp_buf, '\0', sizeof(tmp_buf));
-		snprintf(tmp_buf, sizeof(tmp_buf), "rounds=%u", rounds);
+		snprintf(tmp_buf, sizeof(tmp_buf), "rounds=%lu", rounds);
 		strlcat(out_buf, tmp_buf, sizeof(out_buf));
 		strlcat(out_buf, ascii_dollar, sizeof(out_buf));
 
