@@ -42,6 +42,7 @@
  *
  */
 #include "postgres.h"
+#include "miscadmin.h"
 
 #include "px-crypt.h"
 #include "px.h"
@@ -148,14 +149,16 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 
 	/*
 	 * Check magic byte for supported shacrypt digest.
+	 *
+	 * We're just interested in the very first 3 bytes of the salt string,
+	 * since this defines the digest length to use.
 	 */
 	if (strncmp(dec_salt_binary, magic_bytes[0], strlen(magic_bytes[0])) == 0)
 	{
 		type = PGCRYPTO_SHA256CRYPT;
 		dec_salt_binary += strlen(magic_bytes[0]);
 	}
-
-	if (strncmp(dec_salt_binary, magic_bytes[1], strlen(magic_bytes[1])) == 0)
+	else if (strncmp(dec_salt_binary, magic_bytes[1], strlen(magic_bytes[1])) == 0)
 	{
 		type = PGCRYPTO_SHA512CRYPT;
 		dec_salt_binary += strlen(magic_bytes[1]);
@@ -169,6 +172,10 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 	 * the salt generator already checked for invalid settings before, but
 	 * we need to do it here again to protect against injection of wrong values
 	 * when called without the generator.
+	 *
+	 * If there is any garbage added after the magic byte and the options/salt
+	 * string, we don't treat this special: This is just absorbed as part of
+	 * the salt with up to PX_SHACRYPT_SALT_LEN_MAX.
 	 *
 	 * Unknown magic byte is handled below
 	 */
@@ -270,9 +277,13 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 	elog(DEBUG1, "using salt len = %d", salt_len);
 	strncat(out_buf, dec_salt_binary, salt_len);
 
+	/* Sanity check:
+	 *
+	 * At this point the salt string buffer must not exceed expected size
+	 */
 	if (strlen(out_buf) > 3 + 17 * rounds_custom + salt_len)
 	{
-		elog(ERROR, "invalid salt string");
+		elog(ERROR, "unexpected length of salt string");
 	}
 
 	/*
@@ -414,6 +425,12 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 	 *    uses the notation "digest A/B" to describe this behavior.
 	 */
 	for (block = 0; block < rounds; block++) {
+
+		/*
+		 * Make it possible to abort in case large values for "rounds"
+		 * are specified.
+		 */
+		CHECK_FOR_INTERRUPTS();
 
 		/* a) start digest B */
 		px_md_reset(digestB);
