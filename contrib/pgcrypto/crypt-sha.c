@@ -184,7 +184,7 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 
 		const char *num = dec_salt_binary + sizeof(rounds_prefix) - 1;
 		char *endp;
-		unsigned long int srounds = strtoul (num, &endp, 10);
+		long srounds = strtoul (num, &endp, 10);
 		if (*endp == '$') {
 			dec_salt_binary = endp + 1;
 			if (srounds > PX_SHACRYPT_ROUNDS_MAX)
