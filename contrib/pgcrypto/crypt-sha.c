@@ -138,7 +138,9 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 	 */
 	if (strlen(dec_salt_binary) < 3)
 	{
-		elog(ERROR, "invalid salt");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("invalid salt")));
 	}
 
 	/*
@@ -148,7 +150,10 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 	if ((dec_salt_binary[0] != '$')
 		&& (dec_salt_binary[2] != '$'))
 	{
-		elog(ERROR, "invalid format of salt");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("invalid format of salt")),
+				 errhint("magic byte format for shacrypt is either \"$5$\" or \"$6$\""));
 	}
 
 	/*
@@ -230,12 +235,12 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 		}
 		else
 		{
-			elog(ERROR, "could not parse salt options");
+			ereport(ERROR,
+					errcode(ERRCODE_SYNTAX_ERROR),
+					errmsg("could not parse salt options"));
 		}
 
 	}
-
-	elog(DEBUG1, "using rounds = %lu", rounds);
 
 	/*
 	 * We need the real length of the decoded salt string, this is every
@@ -268,8 +273,6 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 				/* digest buffer length is 32 for sha256 */
 				buf_size = 32;
 
-				elog(DEBUG1,
-					 "using sha256crypt as requested by magic byte in salt");
 				strlcat(out_buf, magic_bytes[0], sizeof(out_buf));
 				break;
 			}
@@ -287,8 +290,6 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 
 				buf_size = PX_SHACRYPT_DIGEST_MAX_LENGTH;
 
-				elog(DEBUG1,
-					 "using sha512crypt as requested by magic byte in salt");
 				strlcat(out_buf, magic_bytes[1], sizeof(out_buf));
 				break;
 			}
@@ -614,6 +615,8 @@ error:
 	if (digestB != NULL)
 		px_md_free(digestB);
 
-	elog(ERROR, "cannot create encrypted password");
+	ereport(ERROR,
+			(errcode(ERRCODE_INTERNAL_ERROR),
+			 errmsg("cannot create encrypted password")));
 	return NULL;				/* keep compiler quiet */
 }

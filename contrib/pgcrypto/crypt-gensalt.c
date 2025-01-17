@@ -197,35 +197,30 @@ _crypt_gensalt_sha(unsigned long count,
 	/* output buffer must be allocated with PX_MAX_SALT_LEN bytes */
 	if (PX_MAX_SALT_LEN < result_bufsize)
 	{
-		elog(ERROR, "invalid size of salt");
-	}
-
-	/* shacrypt salt len must not exceed PX_MAX_SALT_LEN */
-	Assert(PX_SHACRYPT_SALT_LEN_MAX <= PX_MAX_SALT_LEN);
-	if (PX_SHACRYPT_SALT_LEN_MAX > PX_MAX_SALT_LEN)
-	{
-		elog(ERROR, "result buffer too small for salt");
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("invalid size of salt")));
 	}
 
 	/*
 	 * Care must be taken to not exceed the buffer size allocated for
 	 * the input character buffer.
 	 */
-
-	if (PX_SHACRYPT_SALT_LEN_MAX != size)
+	if ((PX_SHACRYPT_SALT_LEN_MAX != size)
+		|| (output_size < size))
 	{
-		elog(ERROR, "invalid length of salt string");
-	}
-
-	if (output_size < size) {
-		elog(ERROR, "invalid size of result salt buffer");
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("invalid length of salt buffer")));
 	}
 
 	/* Skip magic bytes, set by callers */
 	s_ptr += 3;
 	if ((rc = pg_snprintf(s_ptr, 18, "rounds=%ld$", count)) <= 0)
 	{
-		elog(ERROR, "cannot format salt string");
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("cannot format salt string")));
 	}
 
 	/* s_ptr should now be positioned at the start of the salt string */
