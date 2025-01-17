@@ -64,10 +64,10 @@
 #define PX_SHACRYPT_ROUNDS_DEFAULT 5000
 
 /* Minimum number of rounds of shacrypt.  */
-#define PX_SHACRYPT_ROUNDS_MIN 1000
+#define PX_SHACRYPT_ROUNDS_MIN 1000l
 
 /* Maximum number of rounds of shacrypt.  */
-#define PX_SHACRYPT_ROUNDS_MAX 999999999
+#define PX_SHACRYPT_ROUNDS_MAX 999999999l
 
 /*
  * main interface

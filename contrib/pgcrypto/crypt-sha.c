@@ -194,14 +194,38 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 		if (*endp == '$')
 		{
 			dec_salt_binary = endp + 1;
-			if (srounds > PX_SHACRYPT_ROUNDS_MAX)
-				elog(ERROR, "maximum rounds supported: \"%d\"",
-					 PX_SHACRYPT_ROUNDS_MAX);
+
+			/*
+			 * We violate supported lower or upper bound of rounds, but in this
+			 * case we change this value to the supported lower or upper value.
+			 * We don't do this silently and print a NOTICE in such a case.
+			 *
+			 * Note that a salt string generated with gen_salt() would never
+			 * generated such a salt string, since it would error out.
+			 *
+			 * But Drepper's upstream reference implementation supports this when
+			 * passing the salt string directly, so we maintain compatibility
+			 * here.
+			 */
+			if (srounds > PX_SHACRYPT_ROUNDS_MAX) {
+				ereport(NOTICE,
+				        errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				        errmsg("rounds=%ld exceeds maximum supported value (%ld), using %ld instead",
+				               srounds, PX_SHACRYPT_ROUNDS_MAX,
+				               PX_SHACRYPT_ROUNDS_MAX));
+						srounds = PX_SHACRYPT_ROUNDS_MAX;
+			}
 			else if (srounds < PX_SHACRYPT_ROUNDS_MIN)
-				elog(ERROR, "minimum rounds supported: \"%d\"",
-					 PX_SHACRYPT_ROUNDS_MIN);
-			else
-				rounds = (unsigned long) srounds;
+			{
+				ereport(NOTICE,
+				        errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				        errmsg("rounds=%ld is below supported value (%ld), using %ld instead",
+				               srounds, PX_SHACRYPT_ROUNDS_MIN,
+				               PX_SHACRYPT_ROUNDS_MIN));
+				srounds = PX_SHACRYPT_ROUNDS_MIN;
+			}
+
+			rounds = (unsigned long) srounds;
 			rounds_custom = 1;
 		}
 		else
