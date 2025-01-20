@@ -525,7 +525,7 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 		int i = (N);                                        \
 		while (i-- > 0)                                     \
 		{                                                   \
-            appendStringInfoCharMacro(out_buf, _crypt_itoa64[w & 0x3f]); \
+			appendStringInfoCharMacro(out_buf, _crypt_itoa64[w & 0x3f]); \
 			w >>= 6;                                        \
 		}                                                   \
 	} while (0)
