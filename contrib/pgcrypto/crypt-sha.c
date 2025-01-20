@@ -598,6 +598,7 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 
 	/* make sure nothing important is left behind */
 	px_memset(&sha_buf, 0, sizeof sha_buf);
+	destroyStringInfo(out_buf);
 
 	/* ...and we're done */
 	return passwd;
@@ -608,6 +609,9 @@ error:
 
 	if (digestB != NULL)
 		px_md_free(digestB);
+
+	if (out_buf != NULL)
+		destroyStringInfo(out_buf);
 
 	ereport(ERROR,
 			(errcode(ERRCODE_INTERNAL_ERROR),
