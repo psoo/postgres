@@ -61,8 +61,6 @@ static unsigned char _crypt_itoa64[64 + 1] =
 
 /*
  * Modern UNIX password, based on SHA crypt hashes
- *
- * Returns a palloc'ed character array.
  */
 char *
 px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstlen)
@@ -71,7 +69,7 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 	static char *magic_bytes[2] = {"$5$", "$6$"};
 
 	/* Used to create the password hash string */
-	StringInfo out_buf  = NULL;
+	StringInfo	out_buf = NULL;
 
 	PGCRYPTO_SHA_t type = PGCRYPTO_SHA_UNKOWN;
 	PX_MD	   *digestA = NULL;
@@ -123,7 +121,6 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 	}
 
 	/* Init contents of buffers properly */
-	//memset(&out_buf, '\0', sizeof(out_buf));
 	memset(&sha_buf, '\0', sizeof(sha_buf));
 	memset(&sha_buf_tmp, '\0', sizeof(sha_buf_tmp));
 
@@ -157,7 +154,7 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("invalid format of salt")),
-				 errhint("magic byte format for shacrypt is either \"$5$\" or \"$6$\""));
+				errhint("magic byte format for shacrypt is either \"$5$\" or \"$6$\""));
 	}
 
 	/*
@@ -205,32 +202,34 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 			dec_salt_binary = endp + 1;
 
 			/*
-			 * We violate supported lower or upper bound of rounds, but in this
-			 * case we change this value to the supported lower or upper value.
-			 * We don't do this silently and print a NOTICE in such a case.
+			 * We violate supported lower or upper bound of rounds, but in
+			 * this case we change this value to the supported lower or upper
+			 * value. We don't do this silently and print a NOTICE in such a
+			 * case.
 			 *
 			 * Note that a salt string generated with gen_salt() would never
 			 * generated such a salt string, since it would error out.
 			 *
-			 * But Drepper's upstream reference implementation supports this when
-			 * passing the salt string directly, so we maintain compatibility
-			 * here.
+			 * But Drepper's upstream reference implementation supports this
+			 * when passing the salt string directly, so we maintain
+			 * compatibility here.
 			 */
-			if (srounds > PX_SHACRYPT_ROUNDS_MAX) {
+			if (srounds > PX_SHACRYPT_ROUNDS_MAX)
+			{
 				ereport(NOTICE,
-				        errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				        errmsg("rounds=%ld exceeds maximum supported value (%ld), using %ld instead",
-				               srounds, PX_SHACRYPT_ROUNDS_MAX,
-				               PX_SHACRYPT_ROUNDS_MAX));
-						srounds = PX_SHACRYPT_ROUNDS_MAX;
+						errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+						errmsg("rounds=%ld exceeds maximum supported value (%ld), using %ld instead",
+							   srounds, PX_SHACRYPT_ROUNDS_MAX,
+							   PX_SHACRYPT_ROUNDS_MAX));
+				srounds = PX_SHACRYPT_ROUNDS_MAX;
 			}
 			else if (srounds < PX_SHACRYPT_ROUNDS_MIN)
 			{
 				ereport(NOTICE,
-				        errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				        errmsg("rounds=%ld is below supported value (%ld), using %ld instead",
-				               srounds, PX_SHACRYPT_ROUNDS_MIN,
-				               PX_SHACRYPT_ROUNDS_MIN));
+						errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+						errmsg("rounds=%ld is below supported value (%ld), using %ld instead",
+							   srounds, PX_SHACRYPT_ROUNDS_MIN,
+							   PX_SHACRYPT_ROUNDS_MIN));
 				srounds = PX_SHACRYPT_ROUNDS_MIN;
 			}
 
@@ -298,12 +297,12 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 
 	/*
 	 * We need the real length of the decoded salt string, this is every
-	 * character before the last '$' in the preamble. Append every character up
-	 * to PX_SHACRYPT_SALT_LEN_MAX to the result buffer.
+	 * character before the last '$' in the preamble. Append every character
+	 * up to PX_SHACRYPT_SALT_LEN_MAX to the result buffer.
 	 */
 	for (ep = dec_salt_binary;
 		 *ep && *ep != '$' && ep < (dec_salt_binary + PX_SHACRYPT_SALT_LEN_MAX);
-		  ep++)
+		 ep++)
 		appendStringInfoCharMacro(out_buf, *ep);
 	salt_len = ep - dec_salt_binary;
 
