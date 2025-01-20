@@ -61,6 +61,8 @@ static unsigned char _crypt_itoa64[64 + 1] =
 
 /*
  * Modern UNIX password, based on SHA crypt hashes
+ *
+ * Returns a palloc'ed character array.
  */
 char *
 px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstlen)
@@ -68,9 +70,8 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 	static const char rounds_prefix[] = "rounds=";
 	static char *magic_bytes[2] = {"$5$", "$6$"};
 
-	/* "$n$rounds=<N>$......salt......$...shahash(up to 86 chars)...\0" */
-	char		out_buf[PX_SHACRYPT_BUF_LEN];	/* resulting encrypted
-												 * password buffer */
+	/* Used to create the password hash string */
+	StringInfo out_buf  = NULL;
 
 	PGCRYPTO_SHA_t type = PGCRYPTO_SHA_UNKOWN;
 	PX_MD	   *digestA = NULL;
@@ -96,6 +97,9 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 	unsigned	len,
 				salt_len;
 
+	/* Init result buffer */
+	out_buf = makeStringInfoExt(PX_SHACRYPT_BUF_LEN);
+
 	/* Sanity checks */
 	if (!passwd)
 		return NULL;
@@ -119,7 +123,7 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 	}
 
 	/* Init contents of buffers properly */
-	memset(&out_buf, '\0', sizeof(out_buf));
+	//memset(&out_buf, '\0', sizeof(out_buf));
 	memset(&sha_buf, '\0', sizeof(sha_buf));
 	memset(&sha_buf_tmp, '\0', sizeof(sha_buf_tmp));
 
@@ -243,17 +247,6 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 	}
 
 	/*
-	 * We need the real length of the decoded salt string, this is every
-	 * character before the last '$' in the preamble. After the options,
-	 * dec_salt_binary is now positioned at the beginning of the salt string.
-	 */
-	for (ep = dec_salt_binary;
-		 *ep && *ep != '$' && ep < (dec_salt_binary + PX_SHACRYPT_SALT_LEN_MAX);
-		 ep++)
-		continue;
-	salt_len = ep - dec_salt_binary;
-
-	/*
 	 * Choose the correct digest length and add the magic bytes to the result
 	 * buffer. Also handle possible invalid magic byte we've extracted above.
 	 */
@@ -273,7 +266,7 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 				/* digest buffer length is 32 for sha256 */
 				buf_size = 32;
 
-				strlcat(out_buf, magic_bytes[0], sizeof(out_buf));
+				appendStringInfoString(out_buf, magic_bytes[0]);
 				break;
 			}
 
@@ -290,7 +283,7 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 
 				buf_size = PX_SHACRYPT_DIGEST_MAX_LENGTH;
 
-				strlcat(out_buf, magic_bytes[1], sizeof(out_buf));
+				appendStringInfoString(out_buf, magic_bytes[1]);
 				break;
 			}
 
@@ -300,25 +293,28 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 
 	if (rounds_custom > 0)
 	{
-
-		char		tmp_buf[80];	/* "rounds=999999999" */
-
-		memset(&tmp_buf, '\0', sizeof(tmp_buf));
-		snprintf(tmp_buf, sizeof(tmp_buf), "rounds=%lu", rounds);
-		strlcat(out_buf, tmp_buf, sizeof(out_buf));
-		strlcat(out_buf, "$", sizeof(out_buf));
-
+		appendStringInfo(out_buf, "rounds=%lu$", rounds);
 	}
 
+	/*
+	 * We need the real length of the decoded salt string, this is every
+	 * character before the last '$' in the preamble. Append every character up
+	 * to PX_SHACRYPT_SALT_LEN_MAX to the result buffer.
+	 */
+	for (ep = dec_salt_binary;
+		 *ep && *ep != '$' && ep < (dec_salt_binary + PX_SHACRYPT_SALT_LEN_MAX);
+		  ep++)
+		appendStringInfoCharMacro(out_buf, *ep);
+	salt_len = ep - dec_salt_binary;
+
 	elog(DEBUG1, "using salt len = %d", salt_len);
-	strncat(out_buf, dec_salt_binary, salt_len);
 
 	/*
 	 * Sanity check:
 	 *
 	 * At this point the salt string buffer must not exceed expected size
 	 */
-	if (strlen(out_buf) > 3 + 17 * rounds_custom + salt_len)
+	if (out_buf->len > (3 + 17 * rounds_custom + salt_len))
 	{
 		elog(ERROR, "unexpected length of salt string");
 	}
@@ -522,8 +518,7 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 	p_bytes = NULL;
 
 	/* prepare final result buffer */
-	cp = out_buf + strlen(out_buf);
-	*cp++ = '$';
+	appendStringInfoCharMacro(out_buf, '$');
 
 #define b64_from_24bit(B2, B1, B0, N)                      \
 	do {                                                    \
@@ -531,7 +526,7 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 		int i = (N);                                        \
 		while (i-- > 0)                                     \
 		{                                                   \
-			*cp++ = _crypt_itoa64[w & 0x3f];                \
+            appendStringInfoCharMacro(out_buf, _crypt_itoa64[w & 0x3f]); \
 			w >>= 6;                                        \
 		}                                                   \
 	} while (0)
@@ -600,7 +595,7 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 	 *
 	 * In that case we would have failed above already.
 	 */
-	memcpy(passwd, out_buf, PX_SHACRYPT_BUF_LEN);
+	memcpy(passwd, out_buf->data, out_buf->len);
 
 	/* make sure nothing important is left behind */
 	px_memset(&sha_buf, 0, sizeof sha_buf);
