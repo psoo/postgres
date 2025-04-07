@@ -324,7 +324,9 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 			if (strchr(_crypt_itoa64, *ep) != NULL)
 				appendStringInfoCharMacro(decoded_salt, *ep);
 			else
-				elog(ERROR, "invalid character in salt string at: \"%s\"", ep);
+				ereport(ERROR,
+						errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						errmsg("invalid character in salt string at: \"%s\"", ep));
 		}
 		else
 		{
