@@ -58,7 +58,7 @@ typedef enum
 	PGCRYPTO_SHA_UNKOWN
 } PGCRYPTO_SHA_t;
 
-static unsigned char _crypt_itoa64[64 + 1] =
+static const char _crypt_itoa64[64 + 1] =
 "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
 /*
@@ -321,10 +321,10 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 
 		if (*ep != '$')
 		{
-			if (isalpha(*ep) || isdigit(*ep) || (*ep == '.') || (*ep == '/'))
+			if (strchr(_crypt_itoa64, *ep) != NULL)
 				appendStringInfoCharMacro(decoded_salt, *ep);
 			else
-				elog(ERROR, "invalid character in salt string: \"%c\"", *ep);
+				elog(ERROR, "invalid character in salt string at: \"%s\"", ep);
 		}
 		else
 		{
@@ -601,8 +601,6 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 			/* we shouldn't land here ... */
 			elog(ERROR, "unsupported digest length");
 	}
-
-	*cp = '\0';
 
 	/*
 	 * Copy over result to specified buffer.
